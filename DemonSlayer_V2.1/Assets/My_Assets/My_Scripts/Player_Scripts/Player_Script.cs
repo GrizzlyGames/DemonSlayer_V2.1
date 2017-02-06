@@ -7,11 +7,20 @@ public class Player_Script : MonoBehaviour
     #region Public_Variables
     public static Player_Script instance;
     #region Player_Stats
-    public int pts;
-    public float rechargeSpeed = 10;
+    public int money;
+
+    public float speedMultiplier = 3;
+    public float sprintRechargeSpeed = 10;
+    public float sprintRechargeWaitTime = 1;
+    public float sprint = 100;
+    public int maxSprint = 100;
+
+
+    public float shieldRechargeSpeed = 10;
     public float shieldRechargeWaitTime = 1;
-    public int maxShield;
-    public float shield;
+    public int maxShield = 100;
+    public float shield = 100;
+
     public int maxHealth;
     public int health;
     #endregion
@@ -40,10 +49,12 @@ public class Player_Script : MonoBehaviour
     private GameObject projectileGO;                                             // Holds a reference to the first person camera
     private AudioSource gunAudio;
     #endregion
+    private Color lerpedColor = new Color32(0, 255, 255, 255);
     private LayerMask myLayerMask = 1 << 8;
     private float nextFire;
     private bool bReloading;
     private bool bRecharging;
+    private bool isSprinting = false;
     bool rechargeDelayCalled = false;
     #endregion
 
@@ -61,10 +72,18 @@ public class Player_Script : MonoBehaviour
         // Get and store a reference to our AudioSource component
         gunAudio = GetComponent<AudioSource>();
     }
-
-
-
     void Update()
+    {
+        InputHandler();
+        if (!isSprinting && sprint < maxSprint)
+            RechargeSprint();
+    }
+    void OnTriggerEnter(Collider other)
+    {
+        CollectPickUp(other);
+    }
+
+    private void InputHandler()
     {
         if (health > 0)
         {
@@ -156,16 +175,87 @@ public class Player_Script : MonoBehaviour
                     }
                 }
             }
+
+            if (Input.GetKey(KeyCode.LeftShift))
+            {
+                if (sprint > 0)
+                {
+                    isSprinting = true;
+                    sprint -= sprintRechargeSpeed / sprintRechargeWaitTime * Time.deltaTime;
+                    Player_UI_Controller_Script.instance.UpdateSprintScrollbar();
+                    GetComponent<RigidbodyFirstPersonController>().movementSettings.RunMultiplier = (speedMultiplier * ((sprint / maxSprint) + 1) - 1);
+                }
+                else
+                {
+                    Player_UI_Controller_Script.instance.sprintBarHandle.enabled = false;
+                }
+            }
+
+            if (Input.GetKeyUp(KeyCode.LeftShift))
+            {
+                isSprinting = false;
+            }
+
             if (Player_UI_Controller_Script.instance.ActiveReloadScrollbarState())
                 Player_UI_Controller_Script.instance.ActiveReloadScrollbar().value = Mathf.PingPong(reloadBarSpeed * Time.time, 1);
         }
     }
+    private void CollectPickUp(Collider other)
+    {
+        #region Get_PickUp
+        if (other.gameObject.tag.Equals("Ammo"))
+        {
+            Debug.Log("Ammo picked up");
 
-    protected int GetMaximumAmmo()
+            maximumAmmo = GetMaximumAmmo();
+            Player_UI_Controller_Script.instance.UpdateAmmoText(currentAmmo.ToString() + " / " + maximumAmmo.ToString());
+            Destroy(other.gameObject);
+        }
+        else if (other.gameObject.tag.Equals("Health") && health < maxHealth)
+        {
+            Debug.Log("Ammo picked up");
+
+            health = maxHealth;
+            Player_UI_Controller_Script.instance.UpdateHealthScrollbar();
+            Destroy(other.gameObject);
+        }
+        else if (other.gameObject.tag.Equals("Shield") && shield < maxShield)
+        {
+            shield = maxShield;
+            Player_UI_Controller_Script.instance.UpdateShieldScrollbar();
+            Destroy(other.gameObject);
+        }
+        #endregion
+    }
+    private void RechargeSprint()
+    {
+        if (Player_UI_Controller_Script.instance.sprintBarHandle.enabled == false)
+            Player_UI_Controller_Script.instance.sprintBarHandle.enabled = true;
+        if (sprint < maxSprint)
+            sprint += sprintRechargeSpeed / sprintRechargeWaitTime * Time.deltaTime;
+        Player_UI_Controller_Script.instance.UpdateSprintScrollbar();
+    }
+    private void RechargeShield()
+    {
+        if (shield < maxShield)
+        {
+            shield += shieldRechargeSpeed / shieldRechargeWaitTime * Time.deltaTime;
+            Player_UI_Controller_Script.instance.UpdateShieldScrollbar();
+            lerpedColor = Color.Lerp(new Color32(0, 255, 255, 255), new Color32(0, 150, 150, 150), Mathf.PingPong(Time.time, 1));
+            Player_UI_Controller_Script.instance.shieldBarHandle.color = lerpedColor;
+        }
+        else
+        {
+            bRecharging = false;
+            Player_UI_Controller_Script.instance.shieldBarHandle.color = new Color32(0, 255, 255, 255);
+        }
+    }
+
+    private int GetMaximumAmmo()
     {
         return (Weapons_Class.instance.MaxAmmo());
     }
-    protected int GetMagazineCapacity()
+    private int GetMagazineCapacity()
     {
         return (Weapons_Class.instance.MagazineCapacity());
     }
@@ -174,9 +264,6 @@ public class Player_Script : MonoBehaviour
     {
         return (transform);
     }
-
-
-
     public void TakeDamage(int dmg)
     {
         if (shield > 0)
@@ -218,54 +305,6 @@ public class Player_Script : MonoBehaviour
                 GetComponent<RigidbodyFirstPersonController>().enabled = false;
                 GetComponent<Player_Script>().enabled = false;
             }
-        }
-    }
-
-    
-
-    void OnTriggerEnter(Collider other)
-    {
-        #region Get_PickUp
-        if (other.gameObject.tag.Equals("Ammo"))
-        {
-            Debug.Log("Ammo picked up");
-
-            maximumAmmo = GetMaximumAmmo();
-            Player_UI_Controller_Script.instance.UpdateAmmoText(currentAmmo.ToString() + " / " + maximumAmmo.ToString());
-            Destroy(other.gameObject);
-        }
-        else if (other.gameObject.tag.Equals("Health") && health < maxHealth)
-        {
-            Debug.Log("Ammo picked up");
-
-            health = maxHealth;
-            Player_UI_Controller_Script.instance.UpdateHealthScrollbar();
-            Destroy(other.gameObject);
-        }
-        else if (other.gameObject.tag.Equals("Shield") && shield < maxShield)
-        {
-            shield = maxShield;
-            Player_UI_Controller_Script.instance.UpdateShieldScrollbar();
-            Destroy(other.gameObject);
-        }
-        #endregion
-    }
-
-    public Color lerpedColor = new Color32(0, 255, 255, 255);
-
-    private void RechargeShield()
-    {
-        if (shield < maxShield)
-        {
-            shield += rechargeSpeed / shieldRechargeWaitTime * Time.deltaTime;
-            Player_UI_Controller_Script.instance.UpdateShieldScrollbar();
-            lerpedColor = Color.Lerp(new Color32(0, 255, 255, 255), new Color32(0, 150, 150, 150), Mathf.PingPong(Time.time, 1));
-            Player_UI_Controller_Script.instance.shieldBarHandle.color = lerpedColor;
-        }
-        else
-        {
-            bRecharging = false;
-            Player_UI_Controller_Script.instance.shieldBarHandle.color = new Color32(0, 255, 255, 255);
         }
     }
 

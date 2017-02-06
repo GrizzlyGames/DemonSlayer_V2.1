@@ -63,8 +63,7 @@ public class Game_Manager_Script : MonoBehaviour
             GameObject go = Instantiate(Enemy_GO_Ary[rndNum]) as GameObject;
             go.transform.position = TeleportationSpawnLocation(xSpwnRng, ySpwn, zSpwnRng);
             go.transform.parent = spawnLoc;
-            currentNumEnemies++;
-            Debug.Log("Current number of enemies: " + currentNumEnemies);
+            currentNumEnemies++;    // Debug.Log("Current number of enemies: " + currentNumEnemies);            
         }
     }
 
@@ -75,11 +74,8 @@ public class Game_Manager_Script : MonoBehaviour
 
         mX = Random.Range(-x, x + 1);
         mZ = Random.Range(-z, z + 1);
-               
-        Vector3 newPos = new Vector3(spawnLoc.position.x + mX, y, spawnLoc.position.z + mZ);
 
-        Debug.Log("Enemy spawn position: " + newPos);
-
+        Vector3 newPos = new Vector3(spawnLoc.position.x + mX, y, spawnLoc.position.z + mZ);    //Debug.Log("Enemy spawn position: " + newPos);
         return (newPos);
     }
 }

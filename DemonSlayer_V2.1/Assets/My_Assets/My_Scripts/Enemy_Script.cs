@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class Enemy_Script : MonoBehaviour
 {
     public bool alive = true;
-    public bool canWalk = true;
+    public bool canWalk = false;
     public float lookSpeed;
     public int health = 100;
     public int maxHealth = 100;
@@ -15,6 +15,7 @@ public class Enemy_Script : MonoBehaviour
 
     public Image healthBarImage;
 
+    public GameObject raderIconGO;
     public GameObject soulGO;
 
     private bool bAttacking = false;
@@ -32,6 +33,7 @@ public class Enemy_Script : MonoBehaviour
     {
         anim = GetComponent<Animator>();
         navMeshAgent = GetComponent<NavMeshAgent>();
+        StartCoroutine(WalkDelay());
     }
     void Update()
     {
@@ -60,10 +62,13 @@ public class Enemy_Script : MonoBehaviour
                 navMeshAgent.velocity = Vector3.zero;
             #endregion
             #region Look-At-Player
-            Vector3 lookPos = Player_Script.instance.PlayerTransform().position - transform.position;
-            lookPos.y = 0;
-            var rotation = Quaternion.LookRotation(lookPos);
-            transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * lookSpeed);
+            if (canWalk || bAttacking)
+            {
+                Vector3 lookPos = Player_Script.instance.PlayerTransform().position - transform.position;
+                lookPos.y = 0;
+                var rotation = Quaternion.LookRotation(lookPos);
+                transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * lookSpeed);
+            }            
             #endregion
         }
         else
@@ -77,7 +82,7 @@ public class Enemy_Script : MonoBehaviour
         healthBarImage.fillAmount = (float)health / (float)maxHealth;
         if (health > 0)
         {
-            Player_Script.instance.pts += dmg;
+            Player_Script.instance.money += dmg;
             Player_UI_Controller_Script.instance.UpdatePointsText();
             canWalk = false;
             StartCoroutine(WalkDelay());
@@ -87,7 +92,7 @@ public class Enemy_Script : MonoBehaviour
                 case 1:
                     anim.SetTrigger("hit1");
                     break;
-                case 2:
+                default:
                     anim.SetTrigger("hit2");
                     break;
             }
@@ -99,13 +104,13 @@ public class Enemy_Script : MonoBehaviour
                 healthBarImage.enabled = false;
                 canWalk = false;
                 anim.SetTrigger("dead");
-
-                Player_Script.instance.pts += dmg * 3;
+                raderIconGO.SetActive(false);
+                Player_Script.instance.money += dmg * 3;
                 Player_UI_Controller_Script.instance.UpdatePointsText();
                 Game_Manager_Script.instance.currentNumEnemies--;
                 if (Game_Manager_Script.instance.currentNumEnemies <= (int)(Game_Manager_Script.instance.spawnNumEnemies / 4))
                 {
-                    Player_Script.instance.pts *= (int)1.1f;
+                    Player_Script.instance.money *= (int)1.1f;
                     Player_UI_Controller_Script.instance.UpdatePointsText();
                     Game_Manager_Script.instance.spawnNumEnemies *= 2;
                     Game_Manager_Script.instance.SpawnEnemy();

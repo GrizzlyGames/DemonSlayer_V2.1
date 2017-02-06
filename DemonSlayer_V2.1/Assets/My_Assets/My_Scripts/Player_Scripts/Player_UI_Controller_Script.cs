@@ -10,9 +10,11 @@ public class Player_UI_Controller_Script : MonoBehaviour
     public Text AmmoText;                                  // Assign AmmoText from scene
     public Text messageText;
 
+    public Image sprintBarHandle;
     public Image shieldBarHandle;
     public Image healthBarHandle;
 
+    public Scrollbar sprintScrollbar;
     public Scrollbar shieldScrollbar;
     public Scrollbar healthScrollbar;
     public Scrollbar activeReloadScrollbar;
@@ -37,7 +39,7 @@ public class Player_UI_Controller_Script : MonoBehaviour
 
     public void UpdatePointsText()
     {
-        creditsText.text = Player_Script.instance.pts.ToString("N0") + "cr";
+        creditsText.text = Player_Script.instance.money.ToString("N0") + "cr";
     }
     public void UpdateAmmoText(string message)
     {
@@ -68,6 +70,12 @@ public class Player_UI_Controller_Script : MonoBehaviour
     {
         shieldScrollbar.size = (float)Player_Script.instance.shield / (float)Player_Script.instance.maxShield;
     }
+
+    public void UpdateSprintScrollbar()
+    {
+        sprintScrollbar.size = (float)Player_Script.instance.sprint / (float)Player_Script.instance.maxSprint;
+    }
+
     public void UpdateMessageText(string message)
     {
         messageText.text = message;
