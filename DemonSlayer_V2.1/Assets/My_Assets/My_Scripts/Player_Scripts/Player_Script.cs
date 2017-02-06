@@ -8,7 +8,7 @@ public class Player_Script : MonoBehaviour
     public static Player_Script instance;
     #region Player_Stats
     public int pts;
-    public bool bShieldRecharge;
+    public float rechargeSpeed = 10;
     public float shieldRechargeWaitTime = 1;
     public int maxShield;
     public float shield;
@@ -43,6 +43,8 @@ public class Player_Script : MonoBehaviour
     private LayerMask myLayerMask = 1 << 8;
     private float nextFire;
     private bool bReloading;
+    private bool bRecharging;
+    bool rechargeDelayCalled = false;
     #endregion
 
     void Awake()
@@ -64,15 +66,11 @@ public class Player_Script : MonoBehaviour
 
     void Update()
     {
-        if (bShieldRecharge && shield < maxShield)
-        {
-            if (Player_UI_Controller_Script.instance.shieldBarHandle.enabled == false && shield > 0)
-                Player_UI_Controller_Script.instance.shieldBarHandle.enabled = true;
-            shield += 1.5f / shieldRechargeWaitTime * Time.deltaTime;
-            Player_UI_Controller_Script.instance.UpdateShieldScrollbar();
-        }
         if (health > 0)
         {
+            if (bRecharging)
+                RechargeShield();
+
             if (Input.GetMouseButtonDown(0))
             {
                 if (currentAmmo >= 1 && !bReloading)
@@ -177,21 +175,40 @@ public class Player_Script : MonoBehaviour
         return (transform);
     }
 
+
+
     public void TakeDamage(int dmg)
     {
-        bShieldRecharge = false;
-        if (!shieldRechargeCalled)
-            StartCoroutine(ShieldRechargeDelay());
         if (shield > 0)
         {
             shield -= dmg;
-            if (shield < 0)
-                shield = 0;
             Player_UI_Controller_Script.instance.UpdateShieldScrollbar();
+
+            if (shield < maxShield && health > 0)
+            {
+                if (!rechargeDelayCalled)
+                {
+                    rechargeDelayCalled = true;
+                    StartCoroutine(ShieldRechargeDelay());
+                }
+            }
+
+            if (shield <= 0)
+            {
+                if (Player_UI_Controller_Script.instance.shieldBarHandle.enabled == true)
+                    Player_UI_Controller_Script.instance.shieldBarHandle.enabled = false;
+
+                if (health <= 0)
+                {
+                    Player_UI_Controller_Script.instance.healthBarHandle.enabled = false;
+                    Player_UI_Controller_Script.instance.UpdateMessageText("GAME OVER");
+                    GetComponent<RigidbodyFirstPersonController>().enabled = false;
+                    GetComponent<Player_Script>().enabled = false;
+                }
+            }
         }
         else
         {
-            Player_UI_Controller_Script.instance.shieldBarHandle.enabled = false;
             health -= dmg;
             Player_UI_Controller_Script.instance.UpdateHealthScrollbar();
             if (health <= 0)
@@ -204,34 +221,8 @@ public class Player_Script : MonoBehaviour
         }
     }
 
-    IEnumerator ReloadDelay()
-    {
-        bReloading = true;
-        Player_UI_Controller_Script.instance.UpdateAmmoText("Reloading...");
+    
 
-        yield return new WaitForSeconds(damageMultiplier);
-
-        if (currentAmmo + maximumAmmo >= magazineCapacity)
-        {
-            maximumAmmo = maximumAmmo - (magazineCapacity - currentAmmo);
-            currentAmmo = magazineCapacity;
-        }
-        else if (currentAmmo + maximumAmmo < magazineCapacity)
-        {
-            currentAmmo += maximumAmmo;
-            maximumAmmo = 0;
-        }
-        Player_UI_Controller_Script.instance.UpdateAmmoText(currentAmmo.ToString() + " / " + maximumAmmo.ToString());
-        bReloading = false;
-    }
-    private bool shieldRechargeCalled = false;
-    IEnumerator ShieldRechargeDelay()
-    {
-        shieldRechargeCalled = true;
-        yield return new WaitForSeconds(5);
-        bShieldRecharge = true;
-        shieldRechargeCalled = false;
-    }
     void OnTriggerEnter(Collider other)
     {
         #region Get_PickUp
@@ -258,5 +249,57 @@ public class Player_Script : MonoBehaviour
             Destroy(other.gameObject);
         }
         #endregion
+    }
+
+    public Color lerpedColor = new Color32(0, 255, 255, 255);
+
+    private void RechargeShield()
+    {
+        if (shield < maxShield)
+        {
+            shield += rechargeSpeed / shieldRechargeWaitTime * Time.deltaTime;
+            Player_UI_Controller_Script.instance.UpdateShieldScrollbar();
+            lerpedColor = Color.Lerp(new Color32(0, 255, 255, 255), new Color32(0, 150, 150, 150), Mathf.PingPong(Time.time, 1));
+            Player_UI_Controller_Script.instance.shieldBarHandle.color = lerpedColor;
+        }
+        else
+        {
+            bRecharging = false;
+            Player_UI_Controller_Script.instance.shieldBarHandle.color = new Color32(0, 255, 255, 255);
+        }
+    }
+
+    IEnumerator ReloadDelay()
+    {
+        bReloading = true;
+        Player_UI_Controller_Script.instance.UpdateAmmoText("Reloading...");
+
+        yield return new WaitForSeconds(damageMultiplier);
+
+        if (currentAmmo + maximumAmmo >= magazineCapacity)
+        {
+            maximumAmmo = maximumAmmo - (magazineCapacity - currentAmmo);
+            currentAmmo = magazineCapacity;
+        }
+        else if (currentAmmo + maximumAmmo < magazineCapacity)
+        {
+            currentAmmo += maximumAmmo;
+            maximumAmmo = 0;
+        }
+        Player_UI_Controller_Script.instance.UpdateAmmoText(currentAmmo.ToString() + " / " + maximumAmmo.ToString());
+        bReloading = false;
+    }
+    IEnumerator ShieldRechargeDelay()
+    {
+        Debug.Log("Recharge Delay called");
+        yield return new WaitForSeconds(shieldRechargeWaitTime);
+
+        if (shield < 0)
+            shield = 0;
+        if (Player_UI_Controller_Script.instance.shieldBarHandle.enabled == false)
+            Player_UI_Controller_Script.instance.shieldBarHandle.enabled = true;
+
+        bRecharging = true;
+        rechargeDelayCalled = false;
     }
 }

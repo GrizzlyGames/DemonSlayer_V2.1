@@ -88,6 +88,5 @@ C:\Users\Grizzly\Documents\GitHub\DemonSlayer_V2.1\DemonSlayer_V2.1\Temp\bin\Deb
 C:\Users\Grizzly\Documents\GitHub\DemonSlayer_V2.1\DemonSlayer_V2.1\Temp\bin\Debug\UnityEngine.Analytics.xml
 C:\Users\Grizzly\Documents\GitHub\DemonSlayer_V2.1\DemonSlayer_V2.1\Temp\bin\Debug\UnityEngine.HoloLens.xml
 C:\Users\Grizzly\Documents\GitHub\DemonSlayer_V2.1\DemonSlayer_V2.1\Temp\bin\Debug\UnityEngine.VR.xml
-C:\Users\Grizzly\Documents\GitHub\DemonSlayer_V2.1\DemonSlayer_V2.1\obj\Debug\Assembly-CSharp-firstpass.csprojResolveAssemblyReference.cache
 C:\Users\Grizzly\Documents\GitHub\DemonSlayer_V2.1\DemonSlayer_V2.1\obj\Debug\Assembly-CSharp-firstpass.dll
 C:\Users\Grizzly\Documents\GitHub\DemonSlayer_V2.1\DemonSlayer_V2.1\obj\Debug\Assembly-CSharp-firstpass.pdb

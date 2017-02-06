@@ -21,6 +21,8 @@ public class Enemy_Script : MonoBehaviour
     private Vector3 previousPosition;
     private Animator anim;
     private NavMeshAgent navMeshAgent;
+    private float distanceFromPlayer;
+
 
     void Awake()
     {
@@ -36,10 +38,13 @@ public class Enemy_Script : MonoBehaviour
         if (health > 0) // check if enemy is alive
         {
             #region Attack
-            float distance = Vector3.Distance(transform.position, Player_Script.instance.PlayerTransform().position);     // Get distence from player // Debug.Log(distance);
-            anim.SetFloat("targetDistence", distance);
-            if (distance <= 3.1f && Player_Script.instance.health > 0 && !bAttacking)
+            distanceFromPlayer = Vector3.Distance(transform.position, Player_Script.instance.PlayerTransform().position);     // Get distence from player // Debug.Log(distance);
+            anim.SetFloat("targetDistence", distanceFromPlayer);
+            if (distanceFromPlayer <= 3 && Player_Script.instance.health > 0 && !bAttacking)
+            {
+                bAttacking = true;
                 StartCoroutine(AttackDelay());
+            }
             #endregion
             #region Determine-Actor-Speed
             float curSpeed;
@@ -94,30 +99,35 @@ public class Enemy_Script : MonoBehaviour
                 healthBarImage.enabled = false;
                 canWalk = false;
                 anim.SetTrigger("dead");
-                
+
                 Player_Script.instance.pts += dmg * 3;
                 Player_UI_Controller_Script.instance.UpdatePointsText();
                 Game_Manager_Script.instance.currentNumEnemies--;
-                if (Game_Manager_Script.instance.currentNumEnemies <=  (int)(Game_Manager_Script.instance.spawnNumEnemies / 4))
+                if (Game_Manager_Script.instance.currentNumEnemies <= (int)(Game_Manager_Script.instance.spawnNumEnemies / 4))
                 {
                     Player_Script.instance.pts *= (int)1.1f;
                     Player_UI_Controller_Script.instance.UpdatePointsText();
                     Game_Manager_Script.instance.spawnNumEnemies *= 2;
                     Game_Manager_Script.instance.SpawnEnemy();
                 }
-                StartCoroutine(DeathDelay()); 
+                StartCoroutine(DeathDelay());
                 alive = false;  // Killed   
             }
         }
     }
-    
+
     IEnumerator AttackDelay()
     {
-        bAttacking = true;
+        canWalk = false;
         int rnd = Random.Range(1, 4);
         anim.SetInteger("attack", rnd);
-        Player_Script.instance.TakeDamage(damage);
-        yield return new WaitForSeconds(1);
+        anim.SetTrigger("attackTrig");
+
+        float rndTime = Random.Range(1, 3);
+        yield return new WaitForSeconds(rndTime);
+        if (distanceFromPlayer < 4)
+            Player_Script.instance.TakeDamage(damage);
+        canWalk = true;
         anim.SetInteger("attack", 0);
         bAttacking = false;
     }
