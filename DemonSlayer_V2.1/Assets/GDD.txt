@@ -1,0 +1,7 @@
+Pick ups - spawn via spaceship drop
+
+Enemy spawns - Jump over wall
+
+Collect souls and trade them for currency to buy new weapons
+
+Player sprint controlled by energy cells
