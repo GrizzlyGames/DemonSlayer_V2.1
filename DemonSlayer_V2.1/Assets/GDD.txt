@@ -5,3 +5,6 @@ Enemy spawns - Jump over wall
 Collect souls and trade them for currency to buy new weapons
 
 Player sprint controlled by energy cells
+
+ERROR REPORT
+2/6/2016 - 12:48pm = Enemy script null ref

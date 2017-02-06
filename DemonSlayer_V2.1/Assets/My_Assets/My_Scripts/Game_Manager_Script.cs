@@ -29,7 +29,7 @@ public class Game_Manager_Script : MonoBehaviour
     void Start()
     {
         // SpawnDropShip();
-        Instantiate(playerGO, new Vector3(-50, 2, 0), Quaternion.Euler(0, 90, 0));         // Create player in scene
+        //Instantiate(playerGO, new Vector3(-50, 2, 0), Quaternion.Euler(0, 90, 0));         // Create player in scene
         SpawnEnemy();
     }
 
