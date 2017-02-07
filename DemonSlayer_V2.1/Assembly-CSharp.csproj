@@ -54,6 +54,7 @@
      <Compile Include="Assets\My_Assets\My_Scripts\Player_Scripts\Player_UI_Controller_Script.cs" />
      <Compile Include="Assets\My_Assets\My_Scripts\Rotate_Object_Script.cs" />
      <Compile Include="Assets\My_Assets\My_Scripts\Weapons_Class.cs" />
+     <Compile Include="Assets\Projectile_Script.cs" />
      <None Include="Assets\Asset_Store_Imports\Monster2\Shaders\specillumShader.shader" />
      <None Include="Assets\GDD.txt" />
      <None Include="Assets\Asset_Store_Imports\KY_effects\MagicEffectsPackFree\ReadMe.txt" />

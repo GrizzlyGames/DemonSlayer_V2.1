@@ -38,7 +38,8 @@ public class Player_Script : MonoBehaviour
     #endregion
     #region Objects
     public Camera fpsCam;
-    public Transform gunNozzleTrans;
+    public GameObject projectileGO;
+    public Transform gunBarrel;
     #endregion
     #endregion
     #region Private_Variables
@@ -46,7 +47,6 @@ public class Player_Script : MonoBehaviour
 
     #endregion
     #region
-    private GameObject projectileGO;                                             // Holds a reference to the first person camera
     private AudioSource gunAudio;
     #endregion
     private Color lerpedColor = new Color32(0, 255, 255, 255);
@@ -77,6 +77,9 @@ public class Player_Script : MonoBehaviour
         InputHandler();
         if (!isSprinting && sprint < maxSprint)
             RechargeSprint();
+
+        if (Player_UI_Controller_Script.instance.ActiveReloadScrollbarState())
+            Player_UI_Controller_Script.instance.ActiveReloadScrollbar().value = Mathf.PingPong(reloadBarSpeed * Time.time, 1);
     }
     void OnTriggerEnter(Collider other)
     {
@@ -92,112 +95,134 @@ public class Player_Script : MonoBehaviour
 
             if (Input.GetMouseButtonDown(0))
             {
-                if (currentAmmo >= 1 && !bReloading)
-                {
-                    currentAmmo--;      // Reduces current ammo
-                    if (Input.GetButtonDown("Fire1") && Time.time > nextFire)       // Check if the player has pressed the fire button and if enough time has elapsed since they last fired
-                    {
-                        nextFire = Time.time + fireRate;        // Update the time when our player can fire next
-                        gunAudio.Play();     // Play gunshot sound effect
-
-                        #region Raycast
-                        Vector3 rayOrigin = fpsCam.ViewportToWorldPoint(new Vector3(0.5f, 0.5f, 0.0f));     // Create a vector at the center of our camera's viewport
-                        Debug.DrawRay(rayOrigin, fpsCam.transform.forward * weaponRange, Color.green);      // Draw a line in the Scene View  from the point rayOrigin in the direction of fpsCam.transform.forward * weaponRange, using the color green
-                        RaycastHit hit;     // Declare a raycast hit to store information about what our raycast has hit
-
-                        if (Physics.Raycast(rayOrigin, fpsCam.transform.forward, out hit, weaponRange, myLayerMask))     // Check if our raycast has hit anything
-                        {
-                            if (hit.transform.GetComponent<Enemy_Script>() != null)
-                                hit.transform.GetComponent<Enemy_Script>().TakeDamage((int)damage * (int)damageMultiplier);
-                            if (hit.rigidbody != null)      // Check if the object we hit has a rigidbody attached
-                            {
-                                hit.rigidbody.AddForce(-hit.normal * hitForce);     // Add force to the rigidbody we hit, in the direction from which it was hit
-                            }
-                        }
-                        #endregion      // Handles raycast of weapon being shot
-                    }
-                    Player_UI_Controller_Script.instance.UpdateAmmoText(currentAmmo.ToString() + " / " + maximumAmmo.ToString());       // Updates reload text
-                }
-                if (currentAmmo < 1 && maximumAmmo > 1 && !bReloading)
-                {
-                    damageMultiplier = 4;
-                    Player_UI_Controller_Script.instance.UpdateAmmoText("'R' to  reload");
-                }
-                else if (maximumAmmo < 1 && currentAmmo < 1)
-                {
-                    damageMultiplier = 4;
-                    Player_UI_Controller_Script.instance.UpdateAmmoText("No ammo!");
-                }
-            }
-
-            if (Input.GetKeyUp(KeyCode.R))
-            {
-                if (!bReloading && maximumAmmo + currentAmmo > 0)
-                {
-                    if (!Player_UI_Controller_Script.instance.ActiveReloadScrollbarState())
-                    {
-                        Player_UI_Controller_Script.instance.ActiveReloadScrollbarOn(true);
-                    }
-                }
+                Shoot();
             }
 
             if (Input.GetKeyDown(KeyCode.R))
             {
-                if (!bReloading)
-                {
-                    if (Player_UI_Controller_Script.instance.ActiveReloadScrollbarState())
-                    {
-                        damageMultiplier = Player_UI_Controller_Script.instance.ActiveReloadScrollbar().value;
-
-                        if (damageMultiplier <= 0.2f)
-                        {
-                            damageMultiplier = 1;
-                        }
-                        else if (damageMultiplier > 0.2f && damageMultiplier <= 0.4f)
-                        {
-                            damageMultiplier = 2;
-                        }
-                        else if (damageMultiplier > 0.4f && damageMultiplier <= 0.6f)
-                        {
-                            damageMultiplier = 3;
-                        }
-                        else if (damageMultiplier > 0.6f && damageMultiplier <= 0.8f)
-                        {
-                            damageMultiplier = 2;
-                        }
-                        else if (damageMultiplier > 0.8f)
-                        {
-                            damageMultiplier = 1;
-                        }
-
-                        Player_UI_Controller_Script.instance.ActiveReloadScrollbarOn(false);
-                        StartCoroutine("ReloadDelay");
-                    }
-                }
+                Reload(true);
             }
+            if (Input.GetKeyUp(KeyCode.R))
+            {
+                Reload(false);
+            }                       
 
             if (Input.GetKey(KeyCode.LeftShift))
             {
-                if (sprint > 0)
-                {
-                    isSprinting = true;
-                    sprint -= sprintRechargeSpeed / sprintRechargeWaitTime * Time.deltaTime;
-                    Player_UI_Controller_Script.instance.UpdateSprintScrollbar();
-                    GetComponent<RigidbodyFirstPersonController>().movementSettings.RunMultiplier = (speedMultiplier * ((sprint / maxSprint) + 1) - 1);
-                }
-                else
-                {
-                    Player_UI_Controller_Script.instance.sprintBarHandle.enabled = false;
-                }
+                Run(true);
             }
 
             if (Input.GetKeyUp(KeyCode.LeftShift))
             {
-                isSprinting = false;
-            }
+                Run(false);
+            }    
+        }
+    }
+    private void Shoot()
+    {
+        if (currentAmmo >= 1 && !bReloading)
+        {
+            currentAmmo--;      // Reduces current ammo
+            if (Input.GetButtonDown("Fire1") && Time.time > nextFire)       // Check if the player has pressed the fire button and if enough time has elapsed since they last fired
+            {
+                nextFire = Time.time + fireRate;        // Update the time when our player can fire next
+                gunAudio.Play();     // Play gunshot sound effect
 
-            if (Player_UI_Controller_Script.instance.ActiveReloadScrollbarState())
-                Player_UI_Controller_Script.instance.ActiveReloadScrollbar().value = Mathf.PingPong(reloadBarSpeed * Time.time, 1);
+                #region Raycast
+                Vector3 rayOrigin = fpsCam.ViewportToWorldPoint(new Vector3(0.5f, 0.5f, 0.0f));     // Create a vector at the center of our camera's viewport
+                Debug.DrawRay(rayOrigin, fpsCam.transform.forward * weaponRange, Color.green);      // Draw a line in the Scene View  from the point rayOrigin in the direction of fpsCam.transform.forward * weaponRange, using the color green
+                RaycastHit hit;     // Declare a raycast hit to store information about what our raycast has hit
+                Instantiate(projectileGO, gunBarrel.position, gunBarrel.rotation);     // Create bullet
+                if (Physics.Raycast(rayOrigin, fpsCam.transform.forward, out hit, weaponRange, myLayerMask))     // Check if our raycast has hit anything
+                {
+                    if (hit.transform.GetComponent<Enemy_Script>() != null)
+                        hit.transform.GetComponent<Enemy_Script>().TakeDamage((int)damage * (int)damageMultiplier);
+                    if (hit.rigidbody != null)      // Check if the object we hit has a rigidbody attached
+                    {
+                        hit.rigidbody.AddForce(-hit.normal * hitForce);     // Add force to the rigidbody we hit, in the direction from which it was hit
+                    }
+                }
+                #endregion      // Handles raycast of weapon being shot
+            }
+            Player_UI_Controller_Script.instance.UpdateAmmoText(currentAmmo.ToString() + " / " + maximumAmmo.ToString());       // Updates reload text
+        }
+        if (currentAmmo < 1 && maximumAmmo > 1 && !bReloading)
+        {
+            damageMultiplier = 4;
+            Player_UI_Controller_Script.instance.UpdateAmmoText("'R' to  reload");
+        }
+        else if (maximumAmmo < 1 && currentAmmo < 1)
+        {
+            damageMultiplier = 4;
+            Player_UI_Controller_Script.instance.UpdateAmmoText("No ammo!");
+        }
+    }
+    private void Reload(bool keyDown)
+    {
+        if (keyDown)
+        {
+            if (!bReloading)
+            {
+                if (Player_UI_Controller_Script.instance.ActiveReloadScrollbarState())
+                {
+                    damageMultiplier = Player_UI_Controller_Script.instance.ActiveReloadScrollbar().value;
+
+                    if (damageMultiplier <= 0.2f)
+                    {
+                        damageMultiplier = 1;
+                    }
+                    else if (damageMultiplier > 0.2f && damageMultiplier <= 0.4f)
+                    {
+                        damageMultiplier = 2;
+                    }
+                    else if (damageMultiplier > 0.4f && damageMultiplier <= 0.6f)
+                    {
+                        damageMultiplier = 3;
+                    }
+                    else if (damageMultiplier > 0.6f && damageMultiplier <= 0.8f)
+                    {
+                        damageMultiplier = 2;
+                    }
+                    else if (damageMultiplier > 0.8f)
+                    {
+                        damageMultiplier = 1;
+                    }
+
+                    Player_UI_Controller_Script.instance.ActiveReloadScrollbarOn(false);
+                    StartCoroutine("ReloadDelay");
+                }
+            }
+        }
+        else
+        {
+            if (!bReloading && maximumAmmo + currentAmmo > 0)
+            {
+                if (!Player_UI_Controller_Script.instance.ActiveReloadScrollbarState())
+                {
+                    Player_UI_Controller_Script.instance.ActiveReloadScrollbarOn(true);
+                }
+            }
+        }        
+    }
+    private void Run(bool isRunning)
+    {
+        if(isRunning)
+        {
+            if (sprint > 0)
+            {
+                isSprinting = true;
+                sprint -= sprintRechargeSpeed / sprintRechargeWaitTime * Time.deltaTime;
+                Player_UI_Controller_Script.instance.UpdateSprintScrollbar();
+                GetComponent<RigidbodyFirstPersonController>().movementSettings.RunMultiplier = (speedMultiplier * ((sprint / maxSprint) + 1) - 1);
+            }
+            else
+            {
+                Player_UI_Controller_Script.instance.sprintBarHandle.enabled = false;
+            }
+        }
+        else
+        {
+            isSprinting = false;
         }
     }
     private void CollectPickUp(Collider other)
