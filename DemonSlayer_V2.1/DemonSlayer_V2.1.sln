@@ -1,11 +1,11 @@
+﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2008
-
-Project("{ED94FD31-E3B9-BA36-756D-592FFC015487}") = "DemonSlayer_V2.1", "Assembly-CSharp-firstpass.csproj", "{299CCDF1-6CD0-352E-DFEA-B7D2FD0F7E81}"
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemonSlayer_V2.1", "Assembly-CSharp-firstpass.csproj", "{299CCDF1-6CD0-352E-DFEA-B7D2FD0F7E81}"
 EndProject
-Project("{ED94FD31-E3B9-BA36-756D-592FFC015487}") = "DemonSlayer_V2.1", "Assembly-CSharp.csproj", "{5F27F36C-0D48-599C-9389-15D7BAAFF7C8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemonSlayer_V2.1", "Assembly-CSharp.csproj", "{5F27F36C-0D48-599C-9389-15D7BAAFF7C8}"
 EndProject
-Project("{ED94FD31-E3B9-BA36-756D-592FFC015487}") = "DemonSlayer_V2.1", "Assembly-CSharp-Editor-firstpass.csproj", "{A090DD13-470F-85DD-B861-58B4E4A536C9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemonSlayer_V2.1", "Assembly-CSharp-Editor-firstpass.csproj", "{A090DD13-470F-85DD-B861-58B4E4A536C9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
